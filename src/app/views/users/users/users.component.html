@@ -1,1 +1,25 @@
-<p>users works!</p>
+<div class="user-view-container">
+  <div class="card">
+    <form class="search-container" [formGroup]="search">
+      <span class="search-title">Recherche</span>
+      <div class="field">
+        <label for="name" class="floating">Nom</label>
+        <input type="text" id="name" formControlName="name" />
+      </div>
+    </form>
+    <table>
+      <tr>
+        <th>Id</th>
+        <th>Name</th>
+        <th>UserName</th>
+        <th>Mail</th>
+      </tr>
+      <tr *ngFor="let user of users$ | async">
+        <td>{{ user.id }}</td>
+        <td>{{ user.name }}</td>
+        <td>{{ user.username }}</td>
+        <td>{{ user.email }}</td>
+      </tr>
+    </table>
+  </div>
+</div>

@@ -2,5 +2,5 @@ export interface User {
     id: number;
     name: string;
     username: string;
-    mail: string;
+    email: string;
   }
