@@ -2,7 +2,14 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { UsersGateway } from 'src/app/core/gateways/users.gateway';
 import { User } from 'src/app/core/models/user.model';
-import { Observable, combineLatest, map, startWith, switchMap } from 'rxjs';
+import {
+  Observable,
+  combineLatest,
+  debounceTime,
+  map,
+  startWith,
+  switchMap,
+} from 'rxjs';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
@@ -10,10 +17,11 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './users.component.html',
-  styleUrls: ['./users.component.css'],
+  styleUrls: ['./users.component.scss'],
 })
 export class UsersComponent {
   search = this.fb.nonNullable.group({
+    id: [''],
     name: [''],
     username: [''],
     email: [''],
@@ -25,29 +33,20 @@ export class UsersComponent {
   constructor(private usersGateway: UsersGateway, private fb: FormBuilder) {}
 
   private getUsers(): Observable<User[]> {
-    const users$ = this.usersGateway.fetchUsers();
-    // const searchName$ = this.search.controls.name.valueChanges.pipe(startWith(''));
-
     const search$ = combineLatest([
+      this.search.controls.id.valueChanges.pipe(startWith('')),
       this.search.controls.name.valueChanges.pipe(startWith('')),
       this.search.controls.username.valueChanges.pipe(startWith('')),
       this.search.controls.email.valueChanges.pipe(startWith('')),
-    ]);
+    ]).pipe(debounceTime(300));
 
-    return combineLatest([users$, search$]).pipe(
-      map(([users, [name, username, email]]) =>
-        users.filter((user) => {
-          const isNameMatching = user.name
-            .toLowerCase()
-            .includes(name.toLowerCase());
-          const isUserNameMatching = user.username
-            .toLowerCase()
-            .includes(username.toLowerCase());
-          const isEmailMatching = user.email
-            .toLowerCase()
-            .includes(email.toLowerCase());
-
-          return isNameMatching && isUserNameMatching && isEmailMatching;
+    return search$.pipe(
+      switchMap(([id, name, username, email]) =>
+        this.usersGateway.fetchUsers({
+          id,
+          name,
+          username,
+          email,
         })
       )
     );
